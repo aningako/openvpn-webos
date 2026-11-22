@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 - 2026-11-22
+- Keep connected after an update: installing/updating the app re-registers its service without root; the watchdog now
+  restores root itself, so a TV restart right after an update still reconnects (before, it waited until the app was
+  opened).
+
 ## 1.0.0 - 2026-11-22
 First release.
 - OpenVPN 2.7 client for rooted LG webOS TVs (root service elevated through Homebrew Channel).
