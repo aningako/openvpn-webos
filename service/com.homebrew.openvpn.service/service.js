@@ -64,17 +64,32 @@ function lanAccess() { return readJson(SETTINGS, {}).lanAccess !== false; }     
 function keepConnected() { return readJson(SETTINGS, {}).keepConnected !== false; }   // on by default
 function touch(p) { try { fs.writeFileSync(p, '', { mode: 0o600 }); } catch (e) { /* ignore */ } }
 function rm(p) { try { fs.unlinkSync(p); } catch (e) { /* none */ } }
+// Boot hook for Homebrew Channel (it runs /var/lib/webosbrew/init.d/* at boot). A small standalone script rather than a
+// symlink into the app: if the app has been uninstalled it deletes itself instead of leaving a dangling entry behind.
+const BOOT_SCRIPT = `#!/bin/sh
+# OpenVPN for webOS: starts the keep-connected watchdog at boot. Written by the app (Keep connected = on).
+# Removes itself when the app is no longer installed.
+W=${WATCHDOG}
+if [ -f "$W" ]; then
+    exec /bin/sh "$W" boot
+fi
+rm -f "$0"
+`;
 function applyKeepConnected() {
-  const on = keepConnected();
-  if (on) {
+  if (keepConnected()) {
     touch(KEEP_FLAG);
-    try {   // Homebrew Channel runs /var/lib/webosbrew/init.d at boot: start the watchdog there
+    try {
       fs.mkdirSync(path.dirname(INITD), { recursive: true });
-      if (readLink(INITD) !== WATCHDOG) { rm(INITD); fs.symlinkSync(WATCHDOG, INITD); }
-    } catch (e) { console.error('init.d link: ' + e.message); }
+      let cur = null;
+      try { if (!fs.lstatSync(INITD).isSymbolicLink()) cur = fs.readFileSync(INITD, 'utf8'); } catch (e) { /* missing */ }
+      if (cur !== BOOT_SCRIPT) {           // also replaces the symlink that 1.0.0/1.0.1 created
+        rm(INITD);
+        fs.writeFileSync(INITD + '.tmp', BOOT_SCRIPT, { mode: 0o755 });
+        fs.renameSync(INITD + '.tmp', INITD);
+      }
+    } catch (e) { console.error('boot script: ' + e.message); }
   } else { rm(KEEP_FLAG); rm(INITD); }
 }
-function readLink(p) { try { return fs.readlinkSync(p); } catch (e) { return null; } }
 function startWatchdog() {
   if (!keepConnected()) return;
   try { spawn('/bin/sh', [WATCHDOG, 'now'], { detached: true, stdio: 'ignore' }).unref(); } catch (e) { console.error('watchdog: ' + e.message); }
@@ -878,6 +893,8 @@ service.register('usbImport', (msg) => {
 // ------------------------------------------------------------------ startup: pick up a VPN left running
 if (isRoot()) {
   try { ensureDirs(); } catch (e) { /* reported by calls */ }
+  // keep the boot hook current (e.g. after an update) once the user has turned Keep connected on by connecting
+  if (fs.existsSync(KEEP_FLAG) || fs.existsSync(INITD)) applyKeepConnected();
   if (fs.existsSync(SOCK)) {
     attaching = [];
     setTimeout(attachDone, 3000);   // never hold callers longer than this

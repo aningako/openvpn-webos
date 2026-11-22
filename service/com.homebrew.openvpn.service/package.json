@@ -1,6 +1,6 @@
 {
   "name": "com.homebrew.openvpn.service",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Root service for the OpenVPN webOS app: runs openvpn and manages profiles",
   "main": "service.js"
 }

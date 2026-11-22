@@ -111,10 +111,27 @@ speed and traffic. Switch to **Log** to see OpenVPN's own messages when somethin
   With *Local network access* on, DNS queries to your router stay local.
 - IPv4 is fully supported; IPv6 routes are passed to OpenVPN as-is.
 - Profiles that need extra files, smart cards (PKCS#11), or a challenge/OTP login are not supported yet.
-- Profiles and saved logins are stored in `/home/root/.config/com.homebrew.openvpn` (root-only). Uninstalling the app does
-  not delete them; remove that folder to wipe them.
+- Profiles and saved logins are stored in `/home/root/.config/com.homebrew.openvpn` (root-only); see
+  [Boot hook and uninstalling](#boot-hook-and-uninstalling).
 - The upload page is plain HTTP on your home network and is only open while the *Add profile* screen is shown, protected
   by the one-time code (5 wrong codes close it).
+
+## Boot hook and uninstalling
+
+*Keep connected* needs one boot hook so the VPN can come back after a restart. The app creates it the first time you
+connect with *Keep connected* on and removes it when you turn the option off:
+
+- `/var/lib/webosbrew/init.d/60-openvpn-webos`, a 7-line script run by Homebrew Channel at boot. It starts the watchdog
+  and deletes itself if the app is no longer installed.
+
+**Uninstalling:** remove the app as usual (Homebrew Channel or the TV's app list). If a VPN is still connected, the
+watchdog notices within about a minute and a half, stops the VPN and removes the boot hook; nothing of the app runs
+after that. Your profiles and saved logins stay in `/home/root/.config/com.homebrew.openvpn`, so a reinstall picks
+them up again. To wipe everything, disconnect first, then run as root on the TV:
+
+```sh
+rm -rf /home/root/.config/com.homebrew.openvpn /var/lib/webosbrew/init.d/60-openvpn-webos
+```
 
 ## Troubleshooting
 
@@ -149,8 +166,10 @@ python3 tools/demo/shoot.py docs   # UI in headless Chromium with a mock service
 - `service/com.homebrew.openvpn.service` is a Node.js service that Homebrew Channel elevates to root. It starts
   `openvpn` detached (so the VPN outlives the app and the service) and controls it through OpenVPN's management socket.
   The login is passed over that socket, never written to a temp file.
-- `watchdog.sh` is started by the service and, at boot, by Homebrew Channel (`/var/lib/webosbrew/init.d`). Every 20 s it
-  asks the service to reconnect if *Keep connected* is on, the user didn't press Disconnect, and openvpn isn't running.
+- `watchdog.sh` is started by the service and, at boot, by the boot hook (`/var/lib/webosbrew/init.d/60-openvpn-webos`).
+  Every 20 s it asks the service to reconnect if *Keep connected* is on, the user didn't press Disconnect, and openvpn
+  isn't running. It exits when *Keep connected* is turned off, switches to the new version after an update, and cleans
+  up (stops the VPN, removes the boot hook) if the app was uninstalled.
 
 ## License
 

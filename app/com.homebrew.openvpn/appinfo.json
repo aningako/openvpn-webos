@@ -1,6 +1,6 @@
 {
   "id": "com.homebrew.openvpn",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "vendor": "Created by aning with Claude",
   "type": "web",
   "main": "index.html",
