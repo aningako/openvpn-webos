@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpenVPN</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <img src="largeIcon.png" alt="" class="logo">
+    <h1>OpenVPN</h1>
+    <span class="credit">Created by aning with Claude</span>
+    <button class="f small" data-act="help" id="btnHelp">? Help</button>
+  </header>
+
+  <main>
+    <section id="statusCard" class="card">
+      <div class="state-row">
+        <div id="dot" class="dot"></div>
+        <div>
+          <div id="stateText" class="state-text">Starting…</div>
+          <div id="stateDetail" class="state-detail"></div>
+        </div>
+      </div>
+      <dl class="facts">
+        <dt>Profile</dt><dd id="fProfile">-</dd>
+        <dt>Server</dt><dd id="fServer">-</dd>
+        <dt>VPN address</dt><dd id="fVpnIp">-</dd>
+        <dt>Public IP</dt><dd id="fPublicIp">-</dd>
+        <dt>Connected for</dt><dd id="fTime">-</dd>
+        <dt>Traffic</dt><dd id="fBytes">-</dd>
+      </dl>
+      <div id="errorBox" class="error-box hidden"></div>
+      <button id="btnMain" class="f big primary" data-act="main">Connect</button>
+      <button id="btnKeep" class="f toggle" data-act="keep"><span class="box"></span>
+        <span><b>Keep connected</b><br><small>Reconnect automatically, also after the TV restarts (needs a saved login)</small></span></button>
+      <button id="btnLan" class="f toggle" data-act="lan"><span class="box"></span>
+        <span><b>Local network access</b><br><small>Phones and PCs at home can still reach the TV while the VPN is on</small></span></button>
+    </section>
+
+    <section id="right">
+      <div class="card">
+        <div class="card-head">
+          <h2>Profiles</h2>
+          <div class="tabs">
+            <button class="f small" data-act="forget" id="btnForget">Forget login</button>
+            <button class="f small danger" data-act="delete" id="btnDelete">Delete</button>
+            <button class="f small" data-act="import">+ Add profile</button>
+          </div>
+        </div>
+        <div id="profiles" class="profiles"></div>
+      </div>
+      <div id="infoCard" class="card">
+        <div class="card-head">
+          <h2 id="infoTitle">Connection details</h2>
+          <div class="tabs">
+            <button class="f small tab on" data-act="tab" data-tab="details" id="tabDetails">Details</button>
+            <button class="f small tab" data-act="tab" data-tab="log" id="tabLog">Log</button>
+          </div>
+        </div>
+        <div id="details" class="details"></div>
+        <pre id="log" class="hidden"></pre>
+      </div>
+    </section>
+  </main>
+  <footer id="hint">◀ ▲ ▼ ▶ move · OK select · Back</footer>
+</div>
+
+<!-- dialogs -->
+<div id="dlgCreds" class="overlay hidden">
+  <div class="dialog top">
+    <h2 id="credsTitle">Sign in</h2>
+    <p id="credsSub" class="dim"></p>
+    <label class="field" id="rowUser"><span>Username</span><input id="inUser" class="f" type="text" autocomplete="off" spellcheck="false"></label>
+    <label class="field"><span id="passLabel">Password</span><input id="inPass" class="f" type="password" autocomplete="off"></label>
+    <button id="btnRemember" class="f toggle on" data-act="remember"><span class="box"></span><span>Remember on this TV</span></button>
+    <div class="dialog-buttons">
+      <button class="f primary" data-act="credsOk">Connect</button>
+      <button class="f" data-act="close">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlgImport" class="overlay hidden">
+  <div class="dialog wide">
+    <h2>Add a profile</h2>
+    <div class="import-grid">
+      <div>
+        <h3>From your phone or computer</h3>
+        <p class="dim">On a device in the same home network, open:</p>
+        <div id="impUrl" class="url">…</div>
+        <p class="dim">and enter this code:</p>
+        <div id="impCode" class="code">······</div>
+        <p class="dim small-note">You can type the login there too. The page closes when you leave this screen.</p>
+      </div>
+      <div class="qr-col"><div id="impQr" class="qr"></div><p class="dim">Scan with your phone</p></div>
+    </div>
+    <h3>From a USB stick</h3>
+    <div id="usbList" class="usb-list"><p class="dim">Plug in a USB stick with a .ovpn file, then press Scan.</p></div>
+    <div class="dialog-buttons">
+      <button class="f" data-act="usbScan">Scan USB</button>
+      <button class="f primary" data-act="close">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlgHelp" class="overlay hidden">
+  <div class="dialog wide help">
+    <h2>How to use OpenVPN</h2>
+    <ol>
+      <li><b>Add your profile.</b> Choose <i>+ Add profile</i>. On your phone or computer (same home network) open the address
+        shown on the TV, or scan the QR code, enter the 6-digit code and pick your <b>.ovpn</b> file. You can type your VPN
+        username and password there too. Or put the .ovpn file on a USB stick and choose <i>Scan USB</i>.</li>
+      <li><b>Connect.</b> Select the profile and press <i>Connect</i>. If the profile needs a login and none is saved, the TV asks
+        for it; tick <i>Remember on this TV</i> to save it.</li>
+      <li><b>Watch TV.</b> Once connected, press the <b>Home</b> button and use your other apps. The VPN keeps running in the
+        background; Back does not close the app while connected.</li>
+      <li><b>Keep connected</b> reconnects automatically if the connection drops and after the TV restarts (needs a saved login).</li>
+      <li><b>Local network access</b> keeps your home devices able to reach the TV (casting, remote apps) while the VPN is on.</li>
+      <li><b>Connection details</b> shows the server, encryption, VPN address, routes, DNS, speed and traffic. <i>Log</i> shows
+        OpenVPN's own messages if something goes wrong.</li>
+      <li><b>Disconnect</b> stops the VPN (and Keep connected won't bring it back until you connect again).</li>
+    </ol>
+    <p class="dim">Needs a rooted LG TV with Homebrew Channel. Profiles must contain their certificates inline (one .ovpn file).
+      Scripts inside profiles are removed for safety.</p>
+    <div class="dialog-buttons"><button class="f primary" data-act="close">Close</button></div>
+  </div>
+</div>
+
+<div id="dlgMsg" class="overlay hidden">
+  <div class="dialog">
+    <h2 id="msgTitle"></h2>
+    <p id="msgText"></p>
+    <div class="dialog-buttons" id="msgButtons"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="lib/qrcode.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

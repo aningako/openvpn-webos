@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenVPN for webOS - add profile</title>
+<style>
+  :root { color-scheme: dark; --bg: #0b1424; --card: #13213a; --line: #24375a; --text: #e8eef9; --dim: #93a4c3; --accent: #f08a24; --ok: #38c172; --bad: #ef5d5d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  main { max-width: 520px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: var(--dim); margin: 0 0 20px; }
+  form { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  label { display: block; font-weight: 600; margin: 14px 0 6px; }
+  label:first-child { margin-top: 0; }
+  small { color: var(--dim); font-weight: 400; }
+  input[type=text], input[type=password], input[type=file] { width: 100%; padding: 11px 12px; font: inherit; color: var(--text);
+    background: #0d182b; border: 1px solid var(--line); border-radius: 9px; }
+  input#code { letter-spacing: .4em; font-size: 22px; text-align: center; }
+  fieldset { border: 1px dashed var(--line); border-radius: 10px; margin: 18px 0 0; padding: 4px 14px 14px; }
+  legend { color: var(--dim); padding: 0 6px; }
+  button { margin-top: 18px; width: 100%; padding: 13px; font: 600 17px system-ui, sans-serif; color: #1a1205; background: var(--accent);
+    border: 0; border-radius: 10px; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  #msg { margin-top: 16px; padding: 12px; border-radius: 9px; display: none; white-space: pre-line; }
+  #msg.ok { display: block; background: rgba(56,193,114,.15); border: 1px solid var(--ok); }
+  #msg.bad { display: block; background: rgba(239,93,93,.15); border: 1px solid var(--bad); }
+  .note { color: var(--dim); font-size: 13px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Add a VPN profile to your TV</h1>
+  <p class="sub">OpenVPN for webOS</p>
+  <form id="f" autocomplete="off">
+    <label for="code">Code shown on the TV</label>
+    <input id="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+    <label for="file">OpenVPN profile <small>(.ovpn)</small></label>
+    <input id="file" type="file" accept=".ovpn,.conf,application/x-openvpn-profile" required>
+    <label for="name">Name on the TV <small>(optional)</small></label>
+    <input id="name" type="text" maxlength="40">
+    <fieldset>
+      <legend>Login (optional)</legend>
+      <label for="user">Username</label>
+      <input id="user" type="text" autocapitalize="off" spellcheck="false">
+      <label for="pass">Password</label>
+      <input id="pass" type="password">
+      <small>Filled in here, the login is saved on the TV so you don't have to type it with the remote.
+        Leave empty to be asked on the TV.</small>
+    </fieldset>
+    <button id="go" type="submit">Send to TV</button>
+    <div id="msg"></div>
+  </form>
+  <p class="note">The file goes straight to your TV over your home network. Scripts in the profile (up/down, plugins)
+    are removed for safety.</p>
+</main>
+<script>
+(function () {
+  var f = document.getElementById('f'), msg = document.getElementById('msg'), go = document.getElementById('go');
+  var fileIn = document.getElementById('file'), nameIn = document.getElementById('name');
+  fileIn.addEventListener('change', function () {
+    var file = fileIn.files[0];
+    if (file && !nameIn.value) nameIn.value = file.name.replace(/\.(ovpn|conf)$/i, '').slice(0, 40);
+  });
+  function show(cls, text) { msg.className = cls; msg.textContent = text; }
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var file = fileIn.files[0];
+    if (!file) return show('bad', 'Choose a .ovpn file.');
+    if (file.size > 512 * 1024) return show('bad', 'That file is too big for an OpenVPN profile.');
+    var r = new FileReader();
+    r.onload = function () {
+      go.disabled = true;
+      show('', '');
+      fetch('/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        code: document.getElementById('code').value.trim(), name: nameIn.value || file.name, text: String(r.result),
+        username: document.getElementById('user').value, password: document.getElementById('pass').value
+      }) }).then(function (res) { return res.json().then(function (j) { return { ok: res.ok, j: j }; }); })
+        .then(function (x) {
+          go.disabled = false;
+          if (!x.ok) return show('bad', x.j.error || 'Something went wrong.');
+          document.getElementById('pass').value = '';
+          show('ok', 'Added "' + x.j.name + '" to the TV.' +
+            (x.j.removed && x.j.removed.length ? '\nRemoved for safety: ' + x.j.removed.join(', ') : ''));
+        }, function () { go.disabled = false; show('bad', 'Could not reach the TV. Is the import screen still open?'); });
+    };
+    r.onerror = function () { show('bad', 'Could not read the file.'); };
+    r.readAsText(file);
+  });
+})();
+</script>
+</body>
+</html>

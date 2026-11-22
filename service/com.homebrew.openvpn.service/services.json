@@ -1,0 +1,10 @@
+{
+  "id": "com.homebrew.openvpn.service",
+  "description": "OpenVPN service for the OpenVPN app",
+  "services": [
+    {
+      "name": "com.homebrew.openvpn.service",
+      "description": "OpenVPN service for the OpenVPN app"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "com.homebrew.openvpn",
+  "version": "1.0.0",
+  "vendor": "Created by aning with Claude",
+  "type": "web",
+  "main": "index.html",
+  "title": "OpenVPN",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "bgColor": "#0b1424",
+  "iconColor": "#0b1424",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "handlesRelaunch": true
+}

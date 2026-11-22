@@ -1,0 +1,8 @@
+# Your own VPN profiles / credentials never go into the repo
+profiles/
+*.ovpn
+*.conf
+build/
+releases/*.ipk
+service/com.homebrew.openvpn.service/bin/
+__pycache__/
