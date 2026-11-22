@@ -1,0 +1,15 @@
+{
+  "id": "com.homebrew.openvpn",
+  "version": "1.0.0",
+  "type": "web",
+  "title": "OpenVPN",
+  "appDescription": "OpenVPN client for rooted LG webOS TVs: load your own .ovpn profile from your phone/PC or a USB stick, connect with one button, stays connected in the background and after restarts, detailed connection info. Created by aning with Claude.",
+  "iconUri": "https://raw.githubusercontent.com/aningako/openvpn-webos/main/app/com.homebrew.openvpn/largeIcon.png",
+  "sourceUrl": "https://github.com/aningako/openvpn-webos",
+  "rootRequired": true,
+  "ipkUrl": "https://github.com/aningako/openvpn-webos/releases/download/v1.0.0/com.homebrew.openvpn_1.0.0_all.ipk",
+  "ipkHash": {
+    "sha256": "cb3079af28f2ea0bc6d09f04b3c6b24c5a0899a578b338ef5409211a3e8188e4"
+  },
+  "ipkSize": 2821012
+}
